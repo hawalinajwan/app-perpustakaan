@@ -1,5 +1,78 @@
 # App Perpustakaan
 
+## Deskripsi
+
+App Perpustakaan adalah aplikasi Sistem Perpustakaan Digital Kampus yang digunakan untuk membantu pengelolaan data buku, anggota, dan transaksi peminjaman.
+
+Project ini dibuat menggunakan Laravel 12 sebagai bagian dari pembelajaran framework PHP.
+
+## Tujuan Aplikasi
+
+Tujuan aplikasi ini adalah mempermudah pengelolaan aktivitas perpustakaan secara digital, mulai dari pengelolaan buku, data anggota, hingga proses peminjaman dan pengembalian buku.
+
+## Cara Menjalankan Project
+
+### 1. Clone repository
+
+```bash
+git clone https://github.com/USERNAME/app-perpustakaan.git
+```
+
+### 2. Masuk ke folder project
+
+```bash
+cd app-perpustakaan
+```
+
+### 3. Install dependency
+
+```bash
+composer install
+```
+
+### 4. Salin file environment
+
+```bash
+cp .env.example .env
+```
+
+### 5. Generate application key
+
+```bash
+php artisan key:generate
+```
+
+### 6. Konfigurasi database
+
+Atur konfigurasi database pada file `.env`.
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=db_perpustakaan
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+### 7. Jalankan aplikasi
+
+```bash
+php artisan serve
+```
+
+Kemudian buka aplikasi melalui:
+
+```text
+http://127.0.0.1:8000
+```
+
+## Pemahaman MVC
+
+* **Model:** Mengurus **data** dan berhubungan langsung dengan *database*.
+* **View:** Mengurus **tampilan** (UI) yang dilihat oleh pengguna.
+* **Controller:** Menjadi **penghubung**; menerima perintah dari *View*, meminta *Model* memproses data, lalu mengirimkan hasilnya kembali ke *View*.
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
