@@ -1,4 +1,4 @@
-<nav>
+<nav class="site-nav">
     <div class="brand">📚 Perpustakaan Digital Kampus</div>
     <ul>
         <li><a href="{{ route('books.index') }}" class="{{ request()->routeIs('books.*') ? 'active' : '' }}">Buku</a></li>
