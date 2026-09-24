@@ -69,13 +69,13 @@
         <div class="error">{{ $message }}</div>
         @enderror
 
-        <label for="nomor_telepon">Nomor Telepon (opsional)</label>
+        <label for="nomor_telepon">Nomor Telepon</label>
         <input type="text" name="nomor_telepon" id="nomor_telepon" value="{{ old('nomor_telepon') }}">
         @error('nomor_telepon')
         <div class="error">{{ $message }}</div>
         @enderror
 
-        <label for="alamat">Alamat (opsional)</label>
+        <label for="alamat">Alamat</label>
         <textarea name="alamat" id="alamat" rows="3">{{ old('alamat') }}</textarea>
         @error('alamat')
         <div class="error">{{ $message }}</div>
