@@ -10,7 +10,7 @@ class MemberController extends Controller
 {
     public function index()
     {
-        $members = Member::when(request('search'), fn ($query, $search) => $query->where('nama', 'like', "%{$search}%"))
+        $members = Member::when(request('search'), fn($query, $search) => $query->where('nama', 'like', "%{$search}%"))
             ->paginate(10);
 
         return view('members.index', compact('members'));
@@ -33,7 +33,7 @@ class MemberController extends Controller
 
     public function show(string $id)
     {
-        $member = Member::findOrFail($id);
+        $member = Member::with(['loans.loanItems.book', 'loans.user'])->findOrFail($id);
 
         return view('members.show', compact('member'));
     }
@@ -51,8 +51,8 @@ class MemberController extends Controller
 
         $validated = $request->validate([
             'nama' => 'required|string|max:100',
-            'nim' => 'required|string|max:20|unique:members,nim,'.$id,
-            'email' => 'required|email|max:100|unique:members,email,'.$id,
+            'nim' => 'required|string|max:20|unique:members,nim,' . $id,
+            'email' => 'required|email|max:100|unique:members,email,' . $id,
             'nomor_telepon' => 'required|string|max:15',
             'alamat' => 'required|string',
             'status' => 'required|in:aktif,nonaktif',
