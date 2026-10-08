@@ -10,7 +10,7 @@
             <li><a href="{{ route('loans.index') }}" class="{{ request()->routeIs('loans.*') ? 'active' : '' }}">Peminjaman</a></li>
         </ul>
         <div class="navbar-user">
-            <span>{{ auth()->user()->name }} ({{ ucfirst(auth()->user()->role) }})</span>
+            <a href="{{ route('profil') }}" class="{{ request()->routeIs('profil*') ? 'active' : '' }}">{{ auth()->user()->name }} ({{ ucfirst(auth()->user()->role) }})</a>
             <form action="{{ route('logout') }}" method="POST" class="inline">
                 @csrf
                 <button type="submit" class="btn-logout">Logout</button>

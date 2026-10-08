@@ -5,6 +5,7 @@ use App\Http\Controllers\BookController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\MemberController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 // Public
@@ -17,6 +18,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/', function () {
         return redirect()->route('books.index');
     });
+
+    Route::get('/profil', [ProfileController::class, 'show'])->name('profil');
+    Route::put('/profil/password', [ProfileController::class, 'updatePassword'])->name('profil.password.update');
 
     Route::resource('books', BookController::class);
     Route::resource('members', MemberController::class);
