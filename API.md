@@ -8,6 +8,26 @@
 
 ---
 
+## Daftar Endpoint
+
+| # | Method | URL | Body (jika ada) | Contoh Response (sukses) | Status Gagal |
+|---|---|---|---|---|---|
+| 1 | GET | `/api/books` | - | `200` `{"data":[{"id":3,"judul":"Bumi Manusia","category":{"id":2,"nama_kategori":"Fiksi"}}],"links":{...},"meta":{"current_page":1,"per_page":10,"total":12}}` | - |
+| 2 | GET | `/api/books/{id}` | - | `200` `{"data":{"id":4,"judul":"Clean Code","penulis":"Robert C. Martin","category":{"id":3,"nama_kategori":"Teknologi"}}}` | `404` `{"message":"No query results for model [App\\Models\\Book] 99999"}` |
+| 3 | POST | `/api/books` | `{"judul":"Test API","penulis":"Author Test","penerbit":"Publisher Test","tahun_terbit":2024,"isbn":"1234567890","stok":5,"category_id":1}` | `201` `{"data":{"id":13,"judul":"Test API",...}}` | `422` `{"message":"Judul buku wajib diisi. (and 5 more errors)","errors":{"judul":["Judul buku wajib diisi."],...}}` |
+| 4 | PUT | `/api/books/{id}` | `{"judul":"Clean Code - Updated","penulis":"Robert C. Martin","penerbit":"Prentice Hall","tahun_terbit":2008,"stok":10,"category_id":3}` | `200` `{"data":{"id":4,"judul":"Clean Code - Updated","stok":10,...}}` | `404` (id tidak ada), `422` (validasi gagal) |
+| 5 | DELETE | `/api/books/{id}` | - | `200` `{"message":"Buku berhasil dihapus."}` | `404` (id tidak ada) |
+| 6 | GET | `/api/members` | - | `200` `{"data":[{"id":1,"nama":"Siti Aminah","nim":"2310501001","status":"aktif",...}],"links":{...},"meta":{"total":13}}` | - |
+| 7 | GET | `/api/members/{id}` | - | `200` `{"data":{"id":1,"nama":"Siti Aminah","nim":"2310501001","email":"siti.aminah@pens.ac.id",...}}` | `404` (id tidak ada) |
+| 8 | GET | `/api/loans` | - | `200` `{"data":[{"id":5,"member":{"id":1,"nama":"Siti Aminah"},"petugas":{"id":1,"name":"Test User"},"status":"dikembalikan","books":[{"id":4,"judul":"Clean Code"}]}],"meta":{"total":8}}` | - |
+| 9 | POST | `/api/loans` | `{"member_id":1,"user_id":1,"tanggal_pinjam":"2026-10-23","tanggal_kembali":"2026-10-30","book_ids":[3,4]}` | `201` `{"data":{"id":8,"status":"dipinjam","tanggal_dikembalikan":null,"books":[{"id":3,"judul":"Bumi Manusia"},{"id":4,"judul":"Clean Code"}]}}` | `422` `{"errors":{"member_id":["Anggota wajib dipilih."],"user_id":["Petugas (user_id) wajib diisi."],"book_ids":["Pilih minimal satu buku."]}}` |
+| 10 | PUT | `/api/loans/{id}/kembalikan` | - | `200` `{"data":{"id":8,"status":"dikembalikan","tanggal_dikembalikan":"2026-10-23"}}` | `404` (id tidak ada) |
+| 11 | GET | `/api/stats` | - | `200` `{"total_buku":12,"total_anggota":13,"peminjaman_aktif":0}` | - |
+
+**Rangkuman status code:** `200` baca/ubah/hapus sukses · `201` create sukses · `404` resource tidak ada · `422` validasi gagal · `500` error server.
+
+---
+
 ## Books
 
 ### GET /api/books
@@ -513,7 +533,23 @@ curl -X PUT "http://127.0.0.1:8000/api/loans/8/kembalikan" \
 
 ---
 
-**Diverifikasi:** 23 Oktober 2026  
+**Diverifikasi:** 23 Oktober 2026 08:31 WIB  
 **Framework:** Laravel 12  
 **Database:** SQLite  
 **Total Endpoints:** 11
+
+**Semua endpoint diuji live (curl) - 14/14 PASS:**
+- `GET /api/books` → 200 (pagination, 10 item)
+- `GET /api/books?judul=clean` → 200 (filter)
+- `GET /api/books/{id}` → 200 (detail)
+- `GET /api/books/99999` → 404
+- `POST /api/books` valid → 201
+- `POST /api/books` body `{}` → 422 (6 errors)
+- `PUT /api/books/{id}` → 200
+- `DELETE /api/books/{id}` → 200
+- `GET /api/members` → 200
+- `GET /api/members/{id}` → 200
+- `GET /api/loans` → 200 (nested member/petugas/books)
+- `POST /api/loans` → 201 (`status: "dipinjam"`)
+- `PUT /api/loans/{id}/kembalikan` → 200 (`status: "dikembalikan"`, tanggal auto)
+- `GET /api/stats` → 200 (`total_buku`, `total_anggota`, `peminjaman_aktif`)
