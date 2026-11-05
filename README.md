@@ -4,47 +4,46 @@
 
 App Perpustakaan adalah aplikasi Sistem Perpustakaan Digital Kampus yang digunakan untuk membantu pengelolaan data buku, anggota, dan transaksi peminjaman.
 
-Project ini dibuat menggunakan Laravel 12 sebagai bagian dari pembelajaran framework PHP.
+Project ini dibuat menggunakan Laravel 12 sebagai bagian dari pembelajaran framework PHP (tugas mata kuliah Pemrograman Berbasis Framework).
 
 ## Tujuan Aplikasi
 
 Tujuan aplikasi ini adalah mempermudah pengelolaan aktivitas perpustakaan secara digital, mulai dari pengelolaan buku, data anggota, hingga proses peminjaman dan pengembalian buku.
+
+## Fitur
+
+- Autentikasi login/logout dengan dua role: `admin` dan `petugas` (password di-hash).
+- CRUD Kategori (khusus admin), Buku, Anggota, dan Peminjaman.
+- Satu transaksi peminjaman bisa memuat banyak buku (tabel pivot `loan_items`).
+- Proses pengembalian buku dengan status `dipinjam`, `dikembalikan`, dan `terlambat`.
+- Dashboard statistik dan halaman Laporan Peminjaman.
+- REST API (`/api/books`, `/api/members`, `/api/loans`, `/api/stats`) dengan API Resource.
 
 ## Cara Menjalankan Project
 
 ### 1. Clone repository
 
 ```bash
-git clone https://github.com/USERNAME/app-perpustakaan.git
-```
-
-### 2. Masuk ke folder project
-
-```bash
+git clone https://github.com/hawalinajwan/app-perpustakaan.git
 cd app-perpustakaan
 ```
 
-### 3. Install dependency
+### 2. Install dependency
 
 ```bash
 composer install
 ```
 
-### 4. Salin file environment
+### 3. Salin file environment dan generate key
 
 ```bash
 cp .env.example .env
-```
-
-### 5. Generate application key
-
-```bash
 php artisan key:generate
 ```
 
-### 6. Konfigurasi database
+### 4. Konfigurasi database
 
-Atur konfigurasi database pada file `.env`.
+Atur konfigurasi database pada file `.env`. Contoh untuk MySQL:
 
 ```env
 DB_CONNECTION=mysql
@@ -55,80 +54,102 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-### 7. Jalankan aplikasi
+Atau pakai SQLite (paling cepat, tanpa server database):
+
+```env
+DB_CONNECTION=sqlite
+```
+
+lalu buat file `database/database.sqlite` kosong.
+
+### 5. Konfigurasi API internal
+
+Dashboard dan Laporan Peminjaman mengambil data lewat HTTP Client (`Http::get()`) ke instance server kedua, bukan query database langsung. Variabel ini **wajib** ada di `.env`:
+
+```env
+INTERNAL_API_URL=http://127.0.0.1:8011
+```
+
+Port-nya harus berbeda dari port server utama. Nilainya dibaca lewat `config/services.php` -> `internal_api.base_url`.
+
+### 6. Migrate dan seed database
 
 ```bash
-php artisan serve
+php artisan migrate --seed
 ```
 
-Kemudian buka aplikasi melalui:
+Untuk reset bersih ke kondisi data demo:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+Seeder mengisi: 3 user, 5 kategori, 20 buku, 15 anggota, dan 10 peminjaman. Faker dikonfigurasi `APP_FAKER_LOCALE=id_ID` sehingga nama/alamat bergaya Indonesia.
+
+Akun hasil seeding:
+
+| Role | Email | Password |
+|---|---|---|
+| Admin | admin@pens.ac.id | password |
+| Petugas | petugas1@pens.ac.id | password |
+| Petugas | petugas2@pens.ac.id | password |
+
+### 7. Jalankan aplikasi (dua server)
+
+`php artisan serve` memproses satu request pada satu waktu. Karena aplikasi memanggil API miliknya sendiri, self-request ke port yang sama akan **deadlock** (halaman hang lalu timeout). Karena itu jalankan dua instance di terminal terpisah:
+
+```bash
+# Terminal 1 - melayani browser
+php artisan serve --port=8000
+
+# Terminal 2 - menerima panggilan API internal dari aplikasi
+php artisan serve --port=8011
+```
+
+Buka `http://127.0.0.1:8000`, login dengan akun di atas.
+
+Kalau server port `8011` tidak dinyalakan, aplikasi tetap jalan: Dashboard menampilkan angka `0` dan Laporan menampilkan tabel kosong (ditangani `try/catch ConnectionException`), bukan error 500.
+
+Di server produksi (Nginx + PHP-FPM atau Laravel Octane) masalah ini tidak muncul karena request diproses paralel, dan `INTERNAL_API_URL` cukup diarahkan ke domain aplikasi.
+
+## Struktur Penting
 
 ```text
-http://127.0.0.1:8000
+app/Http/Controllers/          Controller web (Dashboard, Book, Member, Loan, Category, Auth)
+app/Http/Controllers/Api/      Controller REST API (Book, Member, Loan, Stats)
+app/Http/Resources/            Bentuk response JSON API
+app/Http/Requests/             Validasi form (StoreBookRequest, dsb.)
+database/seeders/              UserSeeder, CategorySeeder, BookSeeder, MemberSeeder, LoanSeeder
+database/factories/            BookFactory, MemberFactory, UserFactory
+resources/views/               Blade: dashboard, books, categories, members, loans, loans/report
+routes/web.php                 Route web (middleware auth & admin)
+routes/api.php                 Route REST API (terbuka tanpa token)
 ```
+
+## API
+
+Semua endpoint mengembalikan JSON, terbuka tanpa token (cocok untuk demo Postman).
+
+| Method | URL | Keterangan |
+|---|---|---|
+| GET | `/api/books` | daftar buku (paginated, filter `judul` & `category_id`) |
+| GET | `/api/books/{id}` | detail buku |
+| POST | `/api/books` | tambah buku |
+| PUT | `/api/books/{id}` | ubah buku |
+| DELETE | `/api/books/{id}` | hapus buku |
+| GET | `/api/members` | daftar anggota |
+| GET | `/api/members/{id}` | detail anggota |
+| GET | `/api/loans` | daftar peminjaman beserta relasi |
+| POST | `/api/loans` | buat peminjaman |
+| PUT | `/api/loans/{id}/kembalikan` | proses pengembalian |
+| GET | `/api/stats` | statistik ringkas (`total_buku`, `total_anggota`, `peminjaman_aktif`) |
+
+## Skenario Demo
+
+Urutan demo untuk penilaian ada di [`DEMO.md`](./DEMO.md).
 
 ## Pemahaman MVC
 
-* **Model:** Mengurus **data** dan berhubungan langsung dengan *database*.
-* **View:** Mengurus **tampilan** (UI) yang dilihat oleh pengguna.
-* **Controller:** Menjadi **penghubung**; menerima perintah dari *View*, meminta *Model* memproses data, lalu mengirimkan hasilnya kembali ke *View*.
-
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
-
-## About Laravel
-
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
-
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
-
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-## Laravel Sponsors
-
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- **Model:** Mengurus **data** dan berhubungan langsung dengan *database*.
+- **View:** Mengurus **tampilan** (UI) yang dilihat oleh pengguna.
+- **Controller:** Menjadi **penghubung**; menerima perintah dari *View*, meminta *Model* memproses data, lalu mengirimkan hasilnya kembali ke *View*.
